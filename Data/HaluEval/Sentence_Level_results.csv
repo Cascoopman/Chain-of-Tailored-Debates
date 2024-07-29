@@ -1,0 +1,2 @@
+Timestamp,Number of Rows,Baseline F1 Score,Phi3 Sentence Level F1 Score,GPT4o Mini Sentence Level F1 Score,GPT4o Sentence Level F1 Score,Baseline (TPR),Baseline (TNR),Phi3 Sentence Level (TPR),Phi3 Sentence Level (TNR),GPT4o Mini Sentence Level (TPR),GPT4o Mini Sentence Level (TNR),GPT4o Sentence Level (TPR),GPT4o Sentence Level (TNR)
+2024-07-28 15:43:30,25,0.6923076923076923,0.3225806451612903,0.8070175438596491,0.7346938775510204,0.72,0.64,0.2,0.96,0.92,0.64,0.72,0.76

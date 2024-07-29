@@ -1,0 +1,2 @@
+Timestamp,Number of Rows,Baseline F1 Score,Phi3 Knowledge Optimized F1 Score,GPT4o Mini Knowledge Optimized F1 Score,GPT4o Knowledge Optimized F1 Score,Baseline (TPR),Baseline (TNR),Phi3 Knowledge Optimized (TPR),Phi3 Knowledge Optimized (TNR),GPT4o Mini Knowledge Optimized (TPR),GPT4o Mini Knowledge Optimized (TNR),GPT4o Knowledge Optimized (TPR),GPT4o Knowledge Optimized (TNR)
+2024-07-28 13:17:07,25,0.8846153846153846,0.7,0.7586206896551724,0.8679245283018868,0.92,0.84,0.84,0.44,0.88,0.56,0.92,0.8
