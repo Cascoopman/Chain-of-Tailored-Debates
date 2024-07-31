@@ -71,6 +71,32 @@ def create_summary_sentence_extractor_messages(summary: str) -> list:
                 {"role": "user", "content": f'''Summary: {summary}'''}
             ]
 
+def create_sentence_statement_extractor_messages(summary: str, sentence: str) -> list:
+    '''This function initiates the messages for invoking an LLM response that extracts sentences from a summary.
+    The conversation list are messages including the system prompt, 3-shot prompting and the summary.
+
+    - Input: a summary 
+    - Output: the conversation list 
+    '''
+    return [
+                {"role": "system", "content": 
+                    '''You are an expert at statement extraction. 
+                    
+                    You are tasked with breaking down a sentence into smaller components, such that each statement can be individually fact-checked. 
+                    Ensure that each statement is a standalone fact or piece of information, such that each can be individually verified or fact-checked.
+                        
+                    Given a summary and a highlighted sentence, accurately extract the statements from the highlighted sentence.    
+                    Make sure to place '\n' between sentences.
+                    '''},
+                {"role": "user", "content": 
+                    f'''Summary: {summary}
+                    
+                    Highlighted sentence: [{sentence}]
+                    
+                    Statements:
+                    '''}
+            ]
+
 def create_entity_extractor_messages(sentence: str) -> list:
     '''This function initiates the messages for invoking an LLM response that extracts the entities from a sentence.
     The conversation list are messages including the system prompt, 3-shot prompting and the sentence.
@@ -138,9 +164,9 @@ def create_hallucination_abduction_messages(knowledge: str, statement: str) -> l
                         Intrinsic hallucinations are statements that contradict the source text.
                     If the entity can be directly entailed using the information from the source text, then it is non-hallucinated.
                      
-                    Given a source text and a summary, it is your task to highlight the hallucinations.
-                    Explain why the statement contains hallucinations based on the source text. 
-                    Refer to the source text sentences that support your claim.
+                    Given a source text and a summary, it is your task to highlight all the hallucinations.
+                    Explain why the statement is hallucinated based on the source text. 
+                    Refer to the source text sentences that prove your claim.
                     Make sure your explanation is very short and to the point.
                     '''},
                 {"role": "user", "content": 
@@ -161,7 +187,7 @@ def create_supported_abduction_messages(knowledge: str, statement: str) -> list:
     '''
     return [
                 {"role": "system", "content": 
-                    '''You are an expert in reasoning. 
+                    '''You are an expert in hallucinations. 
                     It is your task to explain why a summary is supported by a source text.
                     This is done by explaining why the summary does not contain hallucinations.
                     
@@ -194,10 +220,8 @@ def create_hallucinated_critic_messages(document: str, sentence: str, explanatio
     '''
     return [
                 {"role": "system", "content": 
-                    '''You are given a document, a summary and a speaker's argumentation. 
-                    
-                    The speaker's argumentation might be wrong and contain mistakes. 
-                    It is your task to persuade the speaker that their argumentation regarding hallucinations is wrong based on the document.
+                    '''You are an expert in hallucinations.
+                    It is your task to critique a speaker's argumentation regarding hallucinations in a summary.
                     
                     There are three types of hallucinations; 
                         Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the source text. 
@@ -205,8 +229,10 @@ def create_hallucinated_critic_messages(document: str, sentence: str, explanatio
                         Intrinsic hallucinations are statements that contradict the source text.
                     If the entity can be directly entailed using the information from the source text, then it is non-hallucinated.
                     
-                    The speaker claims the summary contains hallucinations.
-                    Please persuade the speaker that their claim is wrong. 
+                    You are given a document, a summary and a speaker's argumentation. 
+                    The speaker's argumentation might be wrong and might contain mistakes. 
+                    It is your task to persuade the speaker that their argumentation is wrong based on the document.
+
                     Make sure your persuasion is very short.
                     '''},
                 {"role": "user", "content": 
@@ -214,7 +240,7 @@ def create_hallucinated_critic_messages(document: str, sentence: str, explanatio
                        
                        Summary: {sentence}
                        
-                       Claim: {explanation}
+                       Argumentation: {explanation}
                        
                        Persuasion:
                     '''}
@@ -340,18 +366,14 @@ def create_judge_messages(summary: str, debates: str) -> list:
                      
                     It is your task to analyze a debate.
                     The debate is about whether or not a summary contains hallucinations. 
-                    
-                    Both sides, pro and contra, are challenged by a critic and are then allowed to generate a defence.
-                    
-                    After hearing the arguments of both sides, do you think the summary contains hallucinations or not? 
-                    
+                                                            
                     There are three types of hallucinations; 
                         Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the source text. 
                         Non-factual hallucinations are entities that are neither inferable from the source text nor factual. 
                         Intrinsic hallucinations are statements that contradict the source text.
                     If the entity can be directly entailed using the information from the source text, then it is non-hallucinated.
                     
-                    Given the debate, does the summary contain hallucinated content or not?
+                    After hearing the arguments of both sides, do you think the summary contains hallucinations or not? 
                     If it contains hallucinated contents, respond with [HALLUCINATED]. 
                     If it does not contain hallucinated contents, respond with [SUPPORTED].
                     
@@ -378,21 +400,20 @@ def create_extended_judge_messages(document: str, summary: str, debates: str) ->
                     '''You are an expert judge.
                      
                     It is your task to analyze a debate.
-                    The debate is about whether or not a summary contains hallucinations. 
-                    
-                    Both sides, pro and contra, are challenged by a critic and are then allowed to generate a defence.
-                    
-                    After hearing the arguments of both sides, do you think the summary contains hallucinations or not? 
-                    
+                    The debate is about whether or not a summary of a source text contains hallucinations. 
+
                     There are three types of hallucinations; 
                         Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the source text. 
                         Non-factual hallucinations are entities that are neither inferable from the source text nor factual. 
                         Intrinsic hallucinations are statements that contradict the source text.
                     If the entity can be directly entailed using the information from the source text, then it is non-hallucinated.
                     
-                    Based on the document and the debate, is the summary hallucinated or supported by the document?
-                    If it is hallucinated, respond with [HALLUCINATED]. 
-                    If it supported, respond with [SUPPORTED].
+                    Base yourself on the source text and the debate.
+                    Their argumentation might contain errors.
+                    
+                    After hearing the arguments of both sides, do you think the summary contains hallucinations or not? 
+                    If it contains hallucinated contents, respond with [HALLUCINATED]. 
+                    If the summary is supported by the document, respond with [SUPPORTED].
                     
                     Do not give an explanation.
                     '''},
@@ -403,7 +424,7 @@ def create_extended_judge_messages(document: str, summary: str, debates: str) ->
                         
                         Debates: {debates}
                         
-                        Judgement:
+                        Judgement about the summary:
                     '''}
             ]   
 
@@ -449,6 +470,138 @@ def counterfactual_debate_extended(document: str, summary: str, debate: str) -> 
     
     return 0
   
+def counterfactual_debate_modified(debating_LLM: str, document: str, summary: str) -> Tuple[int, str, str]:
+
+    response_function = response_dict[debating_LLM]
+    print("-" * 100)
+    print("Debate generated with ", debating_LLM)
+    # Create the debate claiming hallucinations
+    stance_hallucinated = response_function(create_hallucination_abduction_messages(document, summary))
+    debate_hallucinated = f"The argument in favor of [HALLUCINATED]:\n" + stance_hallucinated + "\n" + "End of the argument in favor of [HALLUCINATED]."
+    
+    # Create the debate claiming no hallucinations present
+    stance_supported = response_function(create_supported_abduction_messages(document, summary))
+    debate_supported = f"The argument in favor of [SUPPORTED]:\n" + stance_supported + "\n" + "End of the argument in favor of [SUPPORTED]."
+    
+    # Append the debates
+    debates = "\n" + debate_hallucinated + "\n" + debate_supported + "\n"
+    
+    print(debates)
+    print("-" * 100)
+
+    final_judgement = gpt4o_response(create_extended_judge_messages(document, summary, debates))
+    print("The final judgement after counterfactual debating:\n" + final_judgement)
+
+    if "[HALLUCINATED]" in final_judgement:
+        return (1, debate_hallucinated, debate_supported)
+    
+    return (0, debate_hallucinated, debate_supported)  
+  
+# Functions for collaborative debates  
+  
+def create_collaboration_messages(knowledge: str, statement: str) -> list:
+    '''This function initiates the messages for invoking an LLM response that defends the claim that the statement contains factual hallucinations.
+    The conversation list are messages including the system prompt, 2-shot prompting, the document and the statement.
+
+    - Input: knowledge and a statement 
+    - Output: the conversation list 
+    '''
+    return [
+                {"role": "system", "content": 
+                    '''You are an expert in detecting hallucinations. 
+                    
+                    It is your task to identify if a summary contains hallucinations based on the source text.
+                    
+                    There are three types of hallucinations; 
+                        Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the source text. 
+                        Non-factual hallucinations are entities that are neither inferable from the source text nor factual. 
+                        Intrinsic hallucinations are statements that contradict the source text.
+                    If the entity can be directly entailed using the information from the source text, then it is non-hallucinated.
+                     
+                    Given a source text and a summary, it is your task to highlight all the statements and analyse if it contains hallucinations.
+                    Treat all the statements in the summary.
+                    Explain why the statement is hallucinated based on the source text, or why not.
+                     
+                    Refer to the source text sentences that prove your claim.
+                    And make sure your explanation is very short and to the point.
+                    '''},
+                {"role": "user", "content": 
+                    f'''Source text: {knowledge}
+                       
+                    Summary: {statement}
+                    
+                    Reasoning:
+                    '''}
+            ]  
+
+def create_collaboration_feedback_messages(knowledge: str, statement: str, reasoning: str) -> list:
+    '''This function initiates the messages for invoking an LLM response that defends the claim that the statement contains factual hallucinations.
+    The conversation list are messages including the system prompt, 2-shot prompting, the document and the statement.
+
+    - Input: knowledge and a statement 
+    - Output: the conversation list 
+    '''
+    return [
+                {"role": "system", "content": 
+                    '''You are an expert in detecting hallucinations. 
+                    
+                    You are given another assistant's response to a hallucination detection task.
+                    
+                    It is your task to identify potential mistakes in their reasoning.
+                    
+                    There are three types of hallucinations; 
+                        Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the source text. 
+                        Non-factual hallucinations are entities that are neither inferable from the source text nor factual. 
+                        Intrinsic hallucinations are statements that contradict the source text.
+                    If the entity can be directly entailed using the information from the source text, then it is non-hallucinated.
+
+                    Did the assistant miss any hallucinations?
+                    Or did the assistant wrongfully identify hallucinations?
+                    It is your task to provide critical feedback based on the source text.
+                    Explain which part of their reasoning is flawed and which part is correct.
+                    
+                    Refer to the source text sentences to prove your claim.
+                    And make sure your explanation is very short and to the point.
+                    '''},
+                {"role": "user", "content": 
+                    f'''Source text: {knowledge}
+                       
+                    Summary: {statement}
+                    
+                    Assistant's reasoning: {reasoning}
+                    
+                    Your feedback:
+                    '''}
+            ]  
+  
+def collaborative_debate(debating_LLM: str, document: str, summary: str) -> Tuple[int, str, str]:
+
+    response_function = response_dict[debating_LLM]
+    print("-" * 100)
+    print("Debate generated with ", debating_LLM)
+    # Create the debate claiming hallucinations
+    stance_hallucinated = response_function(create_collaboration_messages(document, summary))
+    debate_hallucinated = f"The initial analysis of the summary:\n" + stance_hallucinated + "\n" + "End of the initial analysis of the summary."
+    
+    # Create the debate claiming no hallucinations present
+    stance_supported = response_function(create_collaboration_feedback_messages(document, summary, stance_hallucinated))
+    debate_supported = f"The feedback on the analysis:\n" + stance_supported + "\n" + "End of the feedback on the analysis."
+    
+    # Append the debates
+    debates = "\n" + debate_hallucinated + "\n" + debate_supported + "\n"
+    
+    print(debates)
+    print("-" * 100)
+
+    final_judgement = gpt4o_response(create_extended_judge_messages(document, summary, debates))
+    print("The final judgement after counterfactual debating:\n" + final_judgement)
+
+    if "[HALLUCINATED]" in final_judgement:
+        return (1, debate_hallucinated, debate_supported)
+    
+    return (0, debate_hallucinated, debate_supported) 
+
+
 # Functions for chain of tailored debates  
   
 def create_statement_hallucination_abduction_messages(document: str, summary: str, statement: str) -> list:
@@ -615,20 +768,21 @@ def create_zeroshot_hallucination_judge(document: str, summary: str) -> list:
                     As soon as a statement in a summary is hallucinated, then the summary contains hallucinated content.
                     
                     There are three types of hallucinations; 
-                        Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the source text. 
-                        Non-factual hallucinations are entities that are neither inferable from the source text nor factual. 
-                        Intrinsic hallucinations are statements that contradict the source text.
+                        Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the document. 
+                        Non-factual hallucinations are entities that are neither inferable from the document nor factual. 
+                        Intrinsic hallucinations are statements that contradict the document.
                         
-                    If a statement can be directly inferred from the source text, then it is not hallucinated.
-                    If a statement is entailed by the source text, then it is not hallucinated.
+                    If a statement can be directly inferred from the document, then it is supported.
+                    If a statement is entailed by the document, then it is also supported.
                     
-                    Given a source text and a summary, does the summary contain hallucinated content or not?
+                    Given a document and a summary, does the summary contain hallucinated content or not?
                     If it contains hallucinated contents, respond with [HALLUCINATED]. 
                     If it does not contain hallucinated contents, respond with [SUPPORTED].
+                    
                     Do not give an explanation.
                     '''},
                 {"role": "user", "content": 
-                    f'''Source text: {document}
+                    f'''Document: {document}
                        
                        Summary: {summary}
                        
@@ -636,12 +790,58 @@ def create_zeroshot_hallucination_judge(document: str, summary: str) -> list:
                     '''}
             ]   
   
+def create_chain_thought_hallucination_judge(document: str, summary: str) -> list:
+    '''This function initiates the messages for invoking the baseline LLM response when judging whether a summary is hallucinated or not.
+    The conversation list are messages including the system prompt, the document and the summary.
+
+    - Input: a document and a summary 
+    - Output: the conversation list 
+    '''
+    return [
+                {"role": "system", "content": 
+                    '''You are an expert in classifying summaries. 
+                    
+                    You are given a document and a summary.
+                    It is your task to judge whether the summary contains hallucinated content or not based on the provided document.
+                        
+                    There are three types of hallucinations; 
+                        Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the source text. 
+                        Non-factual hallucinations are entities that are neither inferable from the document nor factual. 
+                        Intrinsic hallucinations are statements that contradict the document.
+                        
+                    If the summary can be directly inferred from the document, then it is supported.
+                    If the summary is entailed by the document, then it is supported.
+                                        
+                    Given this document, does the summary contain hallucinated content or not?
+                    If it contains hallucinated contents, respond with [HALLUCINATED]. 
+                    If it does not contain hallucinated contents, respond with [SUPPORTED].
+                    
+                    First, let's think step-by-step.
+                    '''},
+                {"role": "user", "content": 
+                    f'''[Beginning of document]
+                        {document}
+                        [End of document]
+                       
+                       Summary: {summary}
+                       
+                       Reasoning:
+                    '''}
+            ]     
+  
 def baseline(document: str, summary: str) -> int:
-    baseline_judgement = gpt4o_response(create_zeroshot_hallucination_judge(document, summary))
+    baseline_judgement = gpt4o_mini_response(create_zeroshot_hallucination_judge(document, summary))
     print("The baseline zeroshot judgement:\n" + baseline_judgement)
     if "[HALLUCINATED]" in baseline_judgement:
         return 1
     return 0  
+
+def chain_thoughts(document: str, summary: str) -> Tuple[int, str]:
+    thought_judgement = gpt4o_mini_response(create_chain_thought_hallucination_judge(document, summary))
+    print("The chain of thought judgement:\n" + thought_judgement)
+    if "[HALLUCINATED]" in thought_judgement:
+        return (1, thought_judgement)
+    return (0, thought_judgement)  
 
 # Functions for knowledge filtering
 
@@ -708,31 +908,30 @@ def create_sentence_level_hallucination_judge(document: str, summary: str, sente
     '''
     return [
                 {"role": "system", "content": 
-                    '''You are an expert in classifying statements. 
+                    '''You are an expert in classifying sentences. 
                     
-                    You are given a summary and a highlighted statement.
-                    It is your task to judge whether the statement contains hallucinated content or not based on the provided source text.
-                    
-                    The statement is part of a summary. 
-                    However, only focus on the highlighted sentence. 
-                    Do not judge the entire summary.
+                    You are given a document and a summary with a highlighted sentence.
+                    It is your task to judge whether the sentence contains hallucinated content or not based on the provided document.
+                    The sentence is part of the summary, however only classify the highlighted sentence. 
                         
                     There are three types of hallucinations; 
                         Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the source text. 
-                        Non-factual hallucinations are entities that are neither inferable from the source text nor factual. 
-                        Intrinsic hallucinations are statements that contradict the source text.
+                        Non-factual hallucinations are entities that are neither inferable from the document nor factual. 
+                        Intrinsic hallucinations are statements that contradict the document.
                         
-                    If the statement can be directly inferred from the source text, then it is not hallucinated.
-                    If the statement is entailed by the source text, then it is not hallucinated.
+                    If the sentence can be directly inferred from the document, then it is supported.
+                    If the sentence is entailed by the document, then it is supported.
                                         
-                    Given this source text, does the sentence contain hallucinated content or not?
+                    Given this document, does the sentence contain hallucinated content or not?
                     If it contains hallucinated contents, respond with [HALLUCINATED]. 
                     If it does not contain hallucinated contents, respond with [SUPPORTED].
                     
                     Do not give an explanation.
                     '''},
                 {"role": "user", "content": 
-                    f'''Source text: {document}
+                    f'''[Beginning of document]
+                        {document}
+                        [End of document]
                        
                        Summary: {summary}
                        
@@ -742,7 +941,7 @@ def create_sentence_level_hallucination_judge(document: str, summary: str, sente
                     '''}
             ] 
     
-def sentence_level(judging_LLM: str, document: str, summary: str) -> Tuple[int, str]:
+def sentence_level(judging_LLM: str, document: str, summary: str) -> int:
     response_function = response_dict[judging_LLM]
     sentences = gpt4o_mini_response(create_summary_sentence_extractor_messages(summary)).split('\n')
     
@@ -757,6 +956,201 @@ def sentence_level(judging_LLM: str, document: str, summary: str) -> Tuple[int, 
         if "HALLUCINATED" in partial_judgement:
             return 1
     return 0
+
+# Functions for statement level detection
+
+def create_statement_level_hallucination_judge(document: str, summary: str, highlighted_sentence: str, isolated_statement: str) -> list:
+    '''This function initiates the messages for invoking the baseline LLM response when judging whether a summary is hallucinated or not.
+    The conversation list are messages including the system prompt, the document and the summary.
+
+    - Input: a document and a summary 
+    - Output: the conversation list 
+    '''
+    return [
+                {"role": "system", "content": 
+                    '''You are an expert in classifying statements in either hallucinated and supported.
+                    
+                    You are given a document.
+                    You are also given a summary of the document, a highlighted sentence from the summary and an isolated statement from that summary's sentence.
+                    It is your task to judge whether the isolated statement is hallucinated or supported, based on the document.
+                        
+                    There are three types of hallucinations; 
+                        Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the document. 
+                        Non-factual hallucinations are entities that are neither inferable from the document nor factual. 
+                        Intrinsic hallucinations are statements that contradict the document.
+                    
+                    On the other hand, if the isolated statement can be inferred from the document in its entirety, then it is supported.
+                    Or if the isolated statement is directly entailed by the document, then it is supported.
+                                        
+                    Given the document, does the isolated statement contain hallucinations or is it supported?
+                    
+                    Respond with [HALLUCINATED] or with [SUPPORTED].
+                    Do not give an explanation.
+                    '''},
+                {"role": "user", "content": 
+                    f'''[Beginning of document]
+                        {document}
+                        [End of document]
+                        
+                        Summary: {summary}
+                        
+                        Highlighted sentence: "{highlighted_sentence}"
+                        
+                        Isolated statement: "{isolated_statement}"
+                       
+                       Judgement of the statement:
+                    '''}
+            ] 
+
+def statement_level(judging_LLM: str, document: str, summary: str) -> int:
+    
+    response_function = response_dict[judging_LLM]
+    sentences = gpt4o_mini_response(create_summary_sentence_extractor_messages(summary)).split('\n')
+    
+    for highlighted_sentence in sentences:
+        print("-" * 25)
+        print(f"The highlighted sentence:\n" + highlighted_sentence)
+        
+        statements = gpt4o_mini_response(create_sentence_statement_extractor_messages(summary, highlighted_sentence)).split('\n')
+        
+        for highlighted_statement in statements: 
+            print("-" * 25)
+            #print(f"The highlighted sentence using {judging_LLM}:\n" + highlighted_sentence)
+            print(f"The highlighted statement:\n" + highlighted_statement)
+
+            partial_judgement = response_function(create_statement_level_hallucination_judge(document, summary, highlighted_sentence, highlighted_statement))
+            print(f"The partial judgement with statement level detection using {judging_LLM}:\n" + partial_judgement)
+            
+            if "HALLUCINATED" in partial_judgement:
+                return 1
+    return 0
+
+# Functions for chain of tailored thoughts
+
+def create_chain_tailored_thoughts_hallucination_judge(document: str, summary: str, highlighted_sentence: str, isolated_statement: str) -> list:
+    '''This function initiates the messages for invoking the baseline LLM response when judging whether a summary is hallucinated or not.
+    The conversation list are messages including the system prompt, the document and the summary.
+
+    - Input: a document and a summary 
+    - Output: the conversation list 
+    '''
+    return [
+                {"role": "system", "content": 
+                    '''You are an expert in classifying statements in either hallucinated and supported.
+                    
+                    You are given a document.
+                    You are also given a summary of the document, a highlighted sentence from the summary and an isolated statement from that summary's sentence.
+                    It is your task to judge whether the isolated statement is hallucinated or supported, based on the document.
+                        
+                    There are three types of hallucinations; 
+                        Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the document. 
+                        Non-factual hallucinations are entities that are neither inferable from the document nor factual. 
+                        Intrinsic hallucinations are statements that contradict the document.
+                    
+                    On the other hand, if the isolated statement can be inferred from the document in its entirety, then it is supported.
+                    Or if the isolated statement is directly entailed by the document, then it is supported.
+                                        
+                    Given the document, does the isolated statement contain hallucinations or is it supported?
+                    
+                    Respond with [HALLUCINATED] or with [SUPPORTED].
+                    
+                    First, let's think step-by-step.
+                    '''},
+                {"role": "user", "content": 
+                    f'''[Beginning of document] 
+                        {document}
+                        [End of document]
+                        
+                        Summary: {summary}
+                        
+                        Highlighted sentence: {highlighted_sentence}
+                        
+                        Isolated statement: "{isolated_statement}"
+                       
+                        Reasoning:
+                    '''}
+            ] 
+
+def chain_tailored_thoughts(judging_LLM: str, document: str, summary: str) -> Tuple[int, str]:
+    
+    response_function = response_dict[judging_LLM]
+    sentences = gpt4o_mini_response(create_summary_sentence_extractor_messages(summary)).split('\n')
+    
+    for highlighted_sentence in sentences:
+        print("-" * 25)
+        print(f"The highlighted sentence:\n" + highlighted_sentence)
+        
+        statements = gpt4o_mini_response(create_sentence_statement_extractor_messages(summary, highlighted_sentence)).split('\n')
+        
+        for highlighted_statement in statements: 
+            print("-" * 25)
+            #print(f"The highlighted sentence using {judging_LLM}:\n" + highlighted_sentence)
+            print(f"The highlighted statement:\n" + highlighted_statement)
+
+            partial_judgement = response_function(create_chain_tailored_thoughts_hallucination_judge(document, summary, highlighted_sentence, highlighted_statement))
+            print(f"The partial judgement with statement level detection using {judging_LLM}:\n" + partial_judgement)
+            
+            if "HALLUCINATED" in partial_judgement:
+                return (1, partial_judgement)
+    return (0, partial_judgement)
+
+def create_chain_tailored_thoughts_sentence_hallucination_judge(document: str, summary: str, highlighted_sentence: str) -> list:
+    '''This function initiates the messages for invoking the baseline LLM response when judging whether a summary is hallucinated or not.
+    The conversation list are messages including the system prompt, the document and the summary.
+
+    - Input: a document and a summary 
+    - Output: the conversation list 
+    '''
+    return [
+                {"role": "system", "content": 
+                    '''You are an expert in classifying sentences in either hallucinated and supported.
+                    
+                    You are given a document.
+                    You are also given a summary of the document and a highlighted sentence from the summary.
+                    It is your task to judge whether the highlighted sentence is hallucinated or supported, based on the document.
+                        
+                    There are three types of hallucinations; 
+                        Factual hallucinations refer to content that might be verifiable by world knowledge but is not inferable from the document. 
+                        Non-factual hallucinations are entities that are neither inferable from the document nor factual. 
+                        Intrinsic hallucinations are sentences that contradict the document.
+                    
+                    On the other hand, if the highlighted sentence can be inferred from the document in its entirety, then it is supported.
+                    Or if the highlighted sentence is directly entailed by the document, then it is supported.
+                                        
+                    Given the document, does the highlighted sentence contain hallucinations or is it supported?
+                    
+                    Respond with [HALLUCINATED] or with [SUPPORTED].
+                    
+                    First, let's think step-by-step.
+                    '''},
+                {"role": "user", "content": 
+                    f'''[Beginning of document] 
+                        {document}
+                        [End of document]
+                        
+                        Summary: {summary}
+                        
+                        Highlighted sentence: "{highlighted_sentence}"
+                                               
+                        Reasoning:
+                    '''}
+            ] 
+    
+def chain_tailored_thoughts_sentence(judging_LLM: str, document: str, summary: str) -> Tuple[int, str]:
+    
+    response_function = response_dict[judging_LLM]
+    sentences = gpt4o_mini_response(create_summary_sentence_extractor_messages(summary)).split('\n')
+    
+    for highlighted_sentence in sentences:
+        print("-" * 25)
+        print(f"The highlighted sentence:\n" + highlighted_sentence)
+        
+        partial_judgement = response_function(create_chain_tailored_thoughts_sentence_hallucination_judge(document, summary, highlighted_sentence))
+        print(f"The partial judgement with statement level detection using {judging_LLM}:\n" + partial_judgement)
+        
+        if "HALLUCINATED" in partial_judgement:
+            return (1, partial_judgement)
+    return (0, partial_judgement)
 
 # Extracting SummEval summaries
 
