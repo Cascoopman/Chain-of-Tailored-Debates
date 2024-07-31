@@ -1,0 +1,2 @@
+Timestamp,Number of Rows,Baseline F1 Score,Phi3 Counterfactual Debate F1 Score,GPT4o Mini Counterfactual Debate F1 Score,GPT4o Counterfactual Debate F1 Score,Baseline (TPR),Baseline (TNR),Phi3 Counterfactual Debate (TPR),Phi3 Counterfactual Debate (TNR),GPT4o Mini Counterfactual Debate (TPR),GPT4o Mini Counterfactual Debate (TNR),GPT4o Counterfactual Debate (TPR),GPT4o Counterfactual Debate (TNR)
+2024-07-29 18:31:37,25,0.9166666666666666,0.7727272727272727,0.8627450980392157,0.75,0.88,0.96,0.68,0.92,0.88,0.84,0.84,0.6
