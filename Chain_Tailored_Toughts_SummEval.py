@@ -4,19 +4,16 @@ from sklearn.metrics import f1_score
 import pandas as pd
 from datetime import datetime
 
-# Retrieve the HaluEval dataset from Hugginface
-ds = load_dataset("pminervini/HaluEval", "summarization")
-dataset = ds['data']
+# Retrieve the SummEval dataset from Hugginface
+ds = load_dataset("mteb/summeval")
+dataset = ds['test']
 df = dataset.to_pandas()
 
-# Remove the first three rows used for fewshot prompting
-df = df.iloc[3:]
-
-# Scramble the dataset
+# Scramble the dataframe
 df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
 # TODO: Set parameters for the number of rows to analyse
-n = 100
+n = 1
 
 # Initialize lists to store true labels and predicted labels for F1 score calculation
 true_labels = []
@@ -34,15 +31,11 @@ for i in range(len(df)):
         break
     
     row = df.iloc[i]
-    document = row['document']
-    right_summary = row['right_summary']
-    hallucinated_summary = row['hallucinated_summary']
+    document = row['text']
+    right_summary = find_random_summary_with_consistency_5(row)
+    hallucinated_summary = find_random_summary_with_hallucinations(row)
     
-    # filter rows with data contaminations
-    if "CLICK HERE" in right_summary or "CLICK HERE" in hallucinated_summary or "CLICK HERE" in document:
-        continue
-    
-    if len(hallucinated_summary) > (1.05 * len(right_summary)) or len(hallucinated_summary) < (0.95 * len(right_summary)):
+    if right_summary == None or hallucinated_summary == None:
         continue
     
     results_per_iteration = pd.DataFrame(columns=[

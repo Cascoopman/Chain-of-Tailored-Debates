@@ -36,6 +36,26 @@ def gpt4o_mini_response(messages: list) -> str:
 
     return response.choices[0].message.content
 
+def gpt35_response(messages: list) -> str:
+    response = client_openai.chat.completions.create(
+        model="gpt-3.5-turbo-0125",
+        temperature=0.0,
+        n=1,
+        messages=messages,
+    )
+
+    return response.choices[0].message.content
+
+def gpt4_response(messages: list) -> str:
+    response = client_openai.chat.completions.create(
+        model="gpt-4-turbo",
+        temperature=0.0,
+        n=1,
+        messages=messages,
+    )
+
+    return response.choices[0].message.content
+
 def gpt4o_response(messages: list) -> str:
     response = client_openai.chat.completions.create(
         model="gpt-4o",
@@ -49,7 +69,9 @@ def gpt4o_response(messages: list) -> str:
 # dict that converts string into function response
 response_dict = {"gpt4o": gpt4o_response,
                  "gpt4o_mini": gpt4o_mini_response,
-                 "phi3": phi3_response,}
+                 "phi3": phi3_response,
+                 "gpt4": gpt4_response,
+                 "gpt35": gpt35_response}
 
 # Functions for sentence and entity extraction
 
@@ -836,6 +858,16 @@ def baseline(document: str, summary: str) -> int:
         return 1
     return 0  
 
+def baseline(document: str, summary: str, filtering_LLM: str) -> int:
+    
+    response_function = response_dict[filtering_LLM]
+
+    baseline_judgement = response_function(create_zeroshot_hallucination_judge(document, summary))
+    print(f"The baseline zeroshot judgement using {filtering_LLM}:\n" + baseline_judgement)
+    if "[HALLUCINATED]" in baseline_judgement:
+        return 1
+    return 0  
+
 def chain_thoughts(document: str, summary: str) -> Tuple[int, str]:
     thought_judgement = gpt4o_mini_response(create_chain_thought_hallucination_judge(document, summary))
     print("The chain of thought judgement:\n" + thought_judgement)
@@ -953,7 +985,7 @@ def sentence_level(judging_LLM: str, document: str, summary: str) -> int:
         partial_judgement = response_function(create_sentence_level_hallucination_judge(document, summary, highlighted_sentence))
         print(f"The partial judgement with sentence level detection using {judging_LLM}:\n" + partial_judgement)
         
-        if "HALLUCINATED" in partial_judgement:
+        if "[HALLUCINATED]" in partial_judgement:
             return 1
     return 0
 

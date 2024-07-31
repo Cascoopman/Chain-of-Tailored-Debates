@@ -16,7 +16,7 @@ df = df.iloc[3:]
 df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
 # TODO: Set parameters for the number of rows to analyse
-n = 25
+n = 100
 
 # Ignore the rows already analyzed
 #df = df.iloc[9000:]
