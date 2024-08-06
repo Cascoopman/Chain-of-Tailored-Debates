@@ -1,0 +1,2 @@
+Timestamp,Number of Rows,Baseline F1 Score,GPT4o Mini Sentence Level F1 Score,GPT4o Mini Statement Level F1 Score,GPT4o Mini CoT F1 Score,GPT4o Mini CoTT Sentence Level F1 Score,GPT4o Mini CoTT Statement Level F1 Score
+2024-08-05 19:05:05,60,0.9230769230769231,0.8928571428571429,0.7543859649122807,0.8380952380952381,0.8118811881188119,0.7706422018348624

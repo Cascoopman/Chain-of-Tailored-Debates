@@ -1,36 +1,20 @@
-from helpers import *
-from datasets import load_dataset
+import pandas as pd
 
-# Retrieve the HaluEval dataset from Hugginface
-ds = load_dataset("pminervini/HaluEval", "summarization")
-dataset = ds['data']
-df = dataset.to_pandas()
+df1 = pd.read_csv('Code/Data/QAGS/correct.csv')
+df2 = pd.read_csv('Code/Data/QAGS/hallucinated.csv')
 
-length_document = 0
-length_right_summary = 0
-length_hallucinated_summary = 0
-
+# add the df's together
+df = pd.concat([df1, df2], ignore_index=True)
 print(len(df))
-print(df.columns)   
+print(df.columns)
 
-count = 0
+# calculate length of articles and summaries
+length_articles = 0
+length_summaries = 0
 
-# Iterate over all rows
 for i in range(len(df)):
-    row = df.iloc[i]
-    document = row['document']
-    right_summary = row['right_summary']
-    hallucinated_summary = row['hallucinated_summary']
-
-    if "CLICK HERE" in right_summary or "CLICK HERE" in hallucinated_summary or "CLICK HERE" in document:
-        continue
+    length_articles += len(df['article'][i])
+    length_summaries += len(df['summary'][i])
     
-    if len(hallucinated_summary) > (1.05 * len(right_summary)) or len(hallucinated_summary) < (0.95 * len(right_summary)):
-        continue
-    
-    count += 1
-        
-    print("Right Summary:", right_summary, "\n")
-    print("Hallucinated Summary:", hallucinated_summary,"\n")
-
-print(count)
+print('Average length of articles:', length_articles/len(df))
+print('Average length of summaries:', length_summaries/len(df))
